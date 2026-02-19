@@ -9,6 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.17.1"
+    "astro": "^5.17.1",
+    "googleapis": "^171.4.0",
+    "twilio": "^5.12.2"
   }
 }

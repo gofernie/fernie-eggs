@@ -1,11 +1,541 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import EggChicken from "../components/EggChicken.astro";
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fernie Eggs</title>
+
+<style>
+:root{
+  --bg:#f4e7d7;
+  --card:rgba(255,255,255,0.62);
+  --ink:rgba(20,18,16,0.92);
+  --muted:rgba(20,18,16,0.68);
+  --line:rgba(0,0,0,0.10);
+}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  display:grid;
+  place-items:start center;
+  padding:16px 18px 30px;
+}
+
+.runway{
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  height:140px;
+  margin-bottom:8px;
+  overflow: visible;
+}
+
+.wrap{
+  width:min(820px,calc(100vw - 24px));
+}
+
+h1{
+  margin: 0 0 22px;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-align:center;
+}
+
+@media(max-width:720px){
+  h1{ font-size:38px; }
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.08);
+  backdrop-filter:blur(6px);
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+@media(max-width:720px){
+  .stats{grid-template-columns:1fr;}
+}
+
+.statCard{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,0.62);
+  border-radius:18px;
+  padding:18px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.label{
+  color:var(--muted);
+  font-size:16px;
+  font-weight:800;
+  letter-spacing:0.3px;
+  margin-bottom:8px;
+}
+
+.value{
+  font-weight:950;
+  font-size:34px;
+  line-height:1.1;
+}
+
+.statusWrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin-top:6px;
+}
+
+.dot{
+  width:12px;
+  height:12px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.2);
+}
+
+.dot.ok{
+  background: rgba(20,120,60,0.85);
+  box-shadow: 0 0 0 3px rgba(20,120,60,0.15);
+}
+
+.dot.bad{
+  background: rgba(180,60,40,0.85);
+  box-shadow: 0 0 0 3px rgba(180,60,40,0.15);
+}
+
+.statusWrap .value{
+  font-size: 28px;
+}
+
+/* Pickup */
+.pickupCard{
+  margin-top:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,0.52);
+  border-radius:16px;
+  padding:14px;
+}
+
+/* Inputs */
+.notifyRow{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+input,button{
+  font:inherit;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,0.16);
+}
+
+input{
+  flex: 1;
+  min-width:260px;
+  background:rgba(255,255,255,0.78);
+  font-size:16px;
+}
+
+button{
+  cursor:pointer;
+  background:rgba(255,255,255,0.90);
+  font-weight:800;
+  font-size:16px;
+}
+
+/* Messages */
+.msg{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,0.55);
+  white-space:pre-wrap;
+}
+
+/* ===== Notify: prominent + animations ===== */
+
+@keyframes notifyFadeIn{
+  from{ opacity:0; transform: translateY(8px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+@keyframes ctaBounce{
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes eggWiggle{
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-6deg) translateY(-1px); }
+  75% { transform: rotate(6deg) translateY(-1px); }
+}
+
+.notifyBlock{
+  margin-top:14px;
+  padding:18px;
+  border-radius:18px;
+  background: linear-gradient(
+    135deg,
+    rgba(180,60,40,0.12),
+    rgba(255,255,255,0.70)
+  );
+  border:1px solid rgba(180,60,40,0.25);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.notifyBlock.is-show{
+  animation: notifyFadeIn 260ms ease-out forwards;
+}
+
+.notifyTitle{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:6px;
+  text-align:center;
+}
+
+.eggIcon{
+  width:18px;
+  height:18px;
+  display:inline-grid;
+  place-items:center;
+  transform-origin: 50% 70%;
+  animation: eggWiggle 1.2s ease-in-out infinite;
+}
+
+.notifySub{
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:12px;
+  text-align:center;
+}
+
+#btnSubscribe{
+  background: rgba(180,60,40,0.88);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 18px rgba(180,60,40,0.25);
+  transition: all 0.15s ease;
+}
+
+#btnSubscribe:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(180,60,40,0.35);
+}
+
+#btnSubscribe.is-bounce{
+  animation: ctaBounce 900ms ease-in-out infinite;
+}
+
+.sponsor{
+  margin-top: 28px;
+  text-align:center;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
+.sponsor a{
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  transition: opacity 0.2s ease;
+}
+
+.sponsor a:hover{
+  opacity: 0.7;
+}
+
+/* Make pickup card act like a clean, clickable card */
+.pickupLink{
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.pickupLink:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.62);
+}
+
+.pickupLink:active{
+  transform: translateY(0px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.pickupTop{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 6px;
+}
+
+.pin{
+  font-size: 16px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.pickupAddr{
+  font-weight: 800;
+}
+
+.pickupHint{
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<div class="runway" id="runway">
+  <EggChicken dozens={0} />
+</div>
+
+<div class="wrap">
+  <h1>Fernie Eggs</h1>
+
+  <div class="card">
+
+    <div class="stats">
+      <div class="statCard">
+        <div class="label">Stock</div>
+        <div class="statusWrap">
+          <span class="dot" id="dot"></span>
+          <div class="value" id="stockLabel">Checking</div>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div class="label">Dozens available</div>
+        <div class="value" id="dozens">…</div>
+      </div>
+
+      <div class="statCard">
+        <div class="label">Price</div>
+        <div class="value">$7</div>
+      </div>
+    </div>
+
+    <!-- PICKUP (whole card clickable) -->
+    <a
+      class="pickupCard pickupLink"
+      id="pickupCard"
+      href="#"
+      target="_blank"
+      rel="noopener"
+      aria-label="Open pickup location in maps"
+    >
+      <div class="pickupTop">
+        <span class="pin" aria-hidden="true">📍</span>
+        <strong>Pickup</strong>
+      </div>
+
+      <div class="pickupLine">
+        In cooler at <span class="pickupAddr">5619 Vanlerberg Rd</span>
+      </div>
+
+      <div class="pickupHint">Tap for directions</div>
+    </a>
+
+    <!-- 🔔 NOTIFY WHEN SOLD OUT -->
+    <div id="notifyBlock" class="notifyBlock" style="display:none;">
+      <div class="notifyTitle">
+        <span class="eggIcon" aria-hidden="true">🥚</span>
+        Want a text when eggs are back?
+      </div>
+
+      <div class="notifySub">
+        Drop your number - I’ll text you when we restock.
+      </div>
+
+      <div class="notifyRow">
+        <input id="phone" placeholder="Your cell (e.g. 250-555-1234)" inputmode="tel" />
+        <button id="btnSubscribe">Notify me</button>
+      </div>
+
+      <div id="subMsg" class="msg" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <div class="sponsor">
+    Sponsored by
+    <a href="https://fernie.homes" target="_blank" rel="noopener">
+      Chris Crump - 460 Realty
+    </a>
+  </div>
+
+</div>
+
+<script>
+const dot = document.getElementById("dot");
+const stockLabel = document.getElementById("stockLabel");
+const dozensEl = document.getElementById("dozens");
+const notifyBlock = document.getElementById("notifyBlock");
+const pickupCard = document.getElementById("pickupCard");
+
+const phoneEl = document.getElementById("phone");
+const btnSubscribe = document.getElementById("btnSubscribe");
+const subMsg = document.getElementById("subMsg");
+
+function buildMapsLink() {
+  const addressText = "5619 Vanlerberg Rd, Fernie, BC";
+  const encoded = encodeURIComponent(addressText);
+
+  const google = `https://www.google.com/maps/dir/?api=1&destination=${encoded}&travelmode=driving`;
+  const apple = `https://maps.apple.com/?daddr=${encoded}&dirflg=d`;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  return isIOS ? apple : google;
+}
+
+/* ✅ LOADING state: hide pickup + notify until status arrives */
+function setLoadingUI(){
+  dot.classList.remove("ok","bad");
+  stockLabel.textContent = "Checking";
+  if (pickupCard) {
+    pickupCard.style.display = "none";
+    pickupCard.href = "#";
+  }
+  if (notifyBlock) {
+    notifyBlock.classList.remove("is-show");
+    notifyBlock.style.display = "none";
+  }
+  if (btnSubscribe) btnSubscribe.classList.remove("is-bounce");
+
+  const runway = document.getElementById("runway");
+  const stage = runway?.querySelector?.(".stage");
+  if (stage){
+    stage.setAttribute("data-state", "soldout");
+    stage.setAttribute("data-dozens", "0");
+  }
+}
+
+function setStockUI(dozens){
+  const n = Number(dozens || 0);
+  dozensEl.textContent = String(n);
+
+  if(n > 0){
+    dot.classList.remove("bad");
+    dot.classList.add("ok");
+    stockLabel.textContent = "In stock";
+
+    if (pickupCard) {
+      pickupCard.style.display = "block";
+      pickupCard.href = buildMapsLink();
+    }
+
+    if (notifyBlock){
+      notifyBlock.classList.remove("is-show");
+      notifyBlock.style.display = "none";
+    }
+    if (btnSubscribe) btnSubscribe.classList.remove("is-bounce");
+  } else {
+    dot.classList.remove("ok");
+    dot.classList.add("bad");
+    stockLabel.textContent = "Sold out";
+
+    if (pickupCard) {
+      pickupCard.style.display = "none";
+      pickupCard.href = "#";
+    }
+
+    if (notifyBlock){
+      notifyBlock.style.display = "block";
+      notifyBlock.classList.remove("is-show");
+      requestAnimationFrame(() => notifyBlock.classList.add("is-show"));
+    }
+    if (btnSubscribe) btnSubscribe.classList.add("is-bounce");
+  }
+
+  const runway = document.getElementById("runway");
+  const stage = runway?.querySelector?.(".stage");
+  if(stage){
+    stage.setAttribute("data-state", n > 0 ? "instock" : "soldout");
+    stage.setAttribute("data-dozens", String(n));
+  }
+}
+
+async function loadStatus(){
+  setLoadingUI();
+  const r = await fetch("/.netlify/functions/status",{ cache:"no-store" });
+  const j = await r.json();
+
+  if(j && typeof j.dozens !== "undefined"){
+    setStockUI(j.dozens);
+  } else {
+    stockLabel.textContent = "Status error";
+    dot.classList.add("bad");
+    if (pickupCard) {
+      pickupCard.style.display = "none";
+      pickupCard.href = "#";
+    }
+    if (notifyBlock) notifyBlock.style.display = "none";
+  }
+}
+
+btnSubscribe?.addEventListener("click", async()=>{
+  if (!subMsg) return;
+  subMsg.style.display = "none";
+
+  const phone = (phoneEl?.value || "").trim();
+
+  const r = await fetch("/.netlify/functions/subscribe",{
+    method:"POST",
+    headers:{ "content-type":"application/json" },
+    body: JSON.stringify({ phone })
+  });
+
+  const j = await r.json();
+  subMsg.style.display = "block";
+  subMsg.textContent = j.ok ? "Added ✅" : (j.error || "Failed");
+});
+
+loadStatus().catch(()=>{
+  stockLabel.textContent="Status error";
+  dot.classList.add("bad");
+  if (pickupCard) {
+    pickupCard.style.display = "none";
+    pickupCard.href = "#";
+  }
+  if (notifyBlock) notifyBlock.style.display = "none";
+});
+</script>
+
+</body>
+</html>

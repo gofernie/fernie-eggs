@@ -1,0 +1,199 @@
+---
+import EggChicken from "../components/EggChicken.astro";
+---
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fernie Eggs - Admin</title>
+
+  <style>
+    :root{
+      --bg:#f4e7d7;
+      --card:rgba(255,255,255,0.62);
+      --ink:rgba(20,18,16,0.92);
+      --muted:rgba(20,18,16,0.68);
+      --line:rgba(0,0,0,0.10);
+    }
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      display:grid;
+      place-items:start center;
+      padding:16px 18px 30px;
+    }
+
+    .runway{
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+      height:140px;
+      margin-bottom:8px;
+    }
+
+    .wrap{ width:min(820px,calc(100vw - 24px)); }
+
+    h1{
+      margin: 0 0 10px;
+      font-size: 44px;
+      font-weight: 800;
+      text-align:center;
+    }
+
+    .sub{
+      text-align:center;
+      color: var(--muted);
+      margin: 0 0 18px;
+      font-size: 14px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 16px 40px rgba(0,0,0,0.08);
+      backdrop-filter:blur(6px);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+
+    input,button{
+      font:inherit;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,0.16);
+    }
+
+    input{
+      min-width:240px;
+      background:rgba(255,255,255,0.75);
+    }
+
+    button{
+      cursor:pointer;
+      background:rgba(255,255,255,0.85);
+    }
+
+    button:disabled{
+      opacity:0.65;
+      cursor:not-allowed;
+    }
+
+    .msg{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.55);
+      white-space:pre-wrap;
+    }
+
+    .small{font-size:13px;color:var(--muted);margin-top:8px;}
+    a{ color: inherit; }
+  </style>
+</head>
+
+<body>
+
+  <div class="runway" id="runway">
+    <EggChicken dozens={0} />
+  </div>
+
+  <div class="wrap">
+    <h1>Admin</h1>
+    <p class="sub"><a href="/">Back to site</a></p>
+
+    <div class="card">
+      <div><strong>Update dozens</strong></div>
+
+      <div class="row">
+        <input id="adminKey" placeholder="Admin key" />
+        <input id="adminDozens" placeholder="Set dozens (e.g. 6)" inputmode="numeric" />
+        <button id="btnRestock">Update and notify</button>
+      </div>
+
+      <div id="adminMsg" class="msg" style="display:none;"></div>
+
+      <div class="small">
+        Tip - set dozens to 0 to mark sold out. Set to 1+ to restock and send texts.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const adminKeyEl = document.getElementById("adminKey");
+    const adminDozensEl = document.getElementById("adminDozens");
+    const btnRestock = document.getElementById("btnRestock");
+    const adminMsg = document.getElementById("adminMsg");
+
+    function showMsg(el, text, ok = true){
+      if (!el) return;
+      el.style.display = "block";
+      el.textContent = text;
+      el.style.borderColor = ok ? "rgba(20,120,60,0.35)" : "rgba(180,60,40,0.35)";
+    }
+
+    function setChickenState(dozens){
+      const n = Number(dozens || 0);
+      const runway = document.getElementById("runway");
+      const stage = runway?.querySelector?.(".stage");
+      if(stage){
+        stage.setAttribute("data-state", n > 0 ? "instock" : "soldout");
+        stage.setAttribute("data-dozens", String(n));
+      }
+    }
+
+    async function loadStatus(){
+      const r = await fetch("/.netlify/functions/status", { cache:"no-store" });
+      const j = await r.json();
+      if (j && typeof j.dozens !== "undefined"){
+        setChickenState(j.dozens);
+      }
+    }
+
+    btnRestock?.addEventListener("click", async () => {
+      if (!btnRestock || !adminMsg) return;
+
+      adminMsg.style.display = "none";
+      const key = (adminKeyEl?.value || "").trim();
+      const dozens = (adminDozensEl?.value || "").trim();
+
+      btnRestock.disabled = true;
+      btnRestock.textContent = "Updating…";
+
+      try{
+        const r = await fetch("/.netlify/functions/restock",{
+          method:"POST",
+          headers:{ "content-type":"application/json" },
+          body: JSON.stringify({ key, dozens })
+        });
+
+        const txt = await r.text();
+        let shown = txt;
+        try{ shown = JSON.stringify(JSON.parse(txt), null, 2); } catch {}
+        showMsg(adminMsg, shown, r.ok);
+
+        await loadStatus();
+      } catch(e){
+        showMsg(adminMsg, "Restock failed - check server logs", false);
+      } finally{
+        btnRestock.disabled = false;
+        btnRestock.textContent = "Update and notify";
+      }
+    });
+
+    loadStatus().catch(() => {});
+  </script>
+
+</body>
+</html>
