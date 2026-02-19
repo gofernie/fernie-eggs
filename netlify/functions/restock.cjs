@@ -69,10 +69,11 @@ exports.handler = async (event) => {
       if (lastNotified === t) continue;
 
       await client.messages.create({
-        to: phone,
-        from,
-        body: "🥚 Fernie Eggs are back in stock. Reply STOP to opt out.",
-      });
+  to: phone,
+  from,
+  body: `🥚 Fresh Fernie Eggs just landed. ${newDozens} dozen available.`,
+});
+
 
       sent++;
 
