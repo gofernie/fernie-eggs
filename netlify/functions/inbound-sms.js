@@ -46,7 +46,17 @@ exports.handler = async (event) => {
     const from10 = last10(fromRaw);
     const replyTo = toE164_NANP(fromRaw);
     const text = upper(bodyRaw);
+// DEBUG (safe): confirm env vars exist without printing secrets
+const hasB64 = !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64;
+const b64Len = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64 || "").length;
+const hasSheetId = !!process.env.GSHEET_ID;
 
+if (!hasB64 || !hasSheetId) {
+  return {
+    statusCode: 500,
+    body: `Missing env vars: GOOGLE_SERVICE_ACCOUNT_JSON_B64=${hasB64} (len=${b64Len}), GSHEET_ID=${hasSheetId}`
+  };
+}
     const doc = await getDoc();
     const subsSheet = await getSheet(doc, "subscribers");
     const configSheet = await getSheet(doc, "config");
