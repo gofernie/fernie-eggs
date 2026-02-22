@@ -1,4 +1,4 @@
-// netlify/functions/inbound-sms.cjs
+// netlify/functions/inbound-sms.js
 const { getDoc, getSheet } = require("./_lib/sheets.cjs");
 const twilio = require("twilio");
 
@@ -25,7 +25,7 @@ function last10(v){
   return d.length >= 10 ? d.slice(-10) : d;
 }
 
-// ✅ Convert to E.164 for Canada/US
+// Convert to E.164 for Canada/US
 function toE164_NANP(v){
   const d = digitsOnly(v);
   if(!d) return "";
@@ -35,13 +35,20 @@ function toE164_NANP(v){
 }
 
 exports.handler = async (event) => {
+  // ✅ TEMP TEST: proves the function is reachable + deploy is current
+  return {
+    statusCode: 200,
+    body: "Function is alive"
+  };
+
+  // ---- everything below won't run until you remove the return above ----
   try{
     const params = new URLSearchParams(event.body || "");
     const fromRaw = params.get("From") || "";
     const bodyRaw = params.get("Body") || "";
 
     const from10 = last10(fromRaw);
-    const replyTo = toE164_NANP(fromRaw); // ✅ safe number for any outbound confirm
+    const replyTo = toE164_NANP(fromRaw);
     const text = upper(bodyRaw);
 
     const doc = await getDoc();
@@ -55,7 +62,6 @@ exports.handler = async (event) => {
     const cfgRows = await configSheet.getRows({ limit: 1 });
     const cfgRow = cfgRows[0] || null;
 
-    // ✅ match by last 10 digits so +1250... and 1250... both match
     const sub = subsRows.find(r => last10(rowGet(r, "phone")) === from10);
 
     const twiml = new twilio.twiml.MessagingResponse();
@@ -94,7 +100,6 @@ exports.handler = async (event) => {
       rowSet(sub, "responded_at", nowISO());
       await sub.save();
 
-      // recompute active_offers (sum of OFFERED)
       if(cfgRow){
         const refreshed = await subsSheet.getRows();
         let active = 0;
@@ -107,11 +112,8 @@ exports.handler = async (event) => {
         await cfgRow.save();
       }
 
-      // ✅ TwiML reply (instant). Also try outbound confirm (optional but helpful).
       twiml.message(`Claimed ✅ You’re down for ${offered} dozen. I’ll follow up about pickup.`);
 
-      // Optional: outbound confirm (sometimes useful if you later switch off TwiML messaging)
-      // If you don’t want this, delete this block.
       try{
         const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
         const fromNum = process.env.TWILIO_FROM;
