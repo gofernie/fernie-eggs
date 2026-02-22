@@ -35,11 +35,7 @@ function toE164_NANP(v){
 }
 
 exports.handler = async (event) => {
-  // ✅ TEMP TEST: proves the function is reachable + deploy is current
-  return {
-    statusCode: 200,
-    body: "Function is alive"
-  };
+
 
   // ---- everything below won't run until you remove the return above ----
   try{
